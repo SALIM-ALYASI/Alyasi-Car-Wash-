@@ -21,3 +21,6 @@ Route::get('/appointments/active', [BotController::class, 'getActiveAppointments
 
 // 
 Route::post('/wash-types/update-price', [BotController::class, 'updatePrice']);
+Route::get('/wash-types', [BotController::class, 'index']);
+Route::post('/wash-types/add', [BotController::class, 'store']); 
+Route::delete('/wash-types/delete/{id}', [BotController::class, 'destroy']);
