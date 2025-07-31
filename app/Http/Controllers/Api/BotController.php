@@ -7,24 +7,36 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\Appointment;
 use App\Models\WashStatus;
+use App\Models\WashType;
 
 class BotController extends Controller
 {
     // 📌 إنشاء أو جلب عميل
-    public function storeClient(Request $request)
-    {
-        $validated = $request->validate([
-            'phone' => 'required|string|max:20',
-            'name'  => 'nullable|string|max:255'
-        ]);
+public function storeClient(Request $request)
+{
+    $validated = $request->validate([
+        'phone' => 'required|string|max:30',
+        'name'  => 'nullable|string|max:255'
+    ]);
 
-        $client = Client::firstOrCreate(
-            ['phone' => $validated['phone']],
-            ['name'  => $validated['name']]
-        );
+    // 🛠 تنظيف الرقم من @c.us أو أي رموز غير أرقام
+    $cleanPhone = preg_replace('/@c\.us$/', '', $validated['phone']);
+    $cleanPhone = preg_replace('/[^0-9]/', '', $cleanPhone);
 
-        return response()->json($client);
+    // 🛠 إضافة كود الدولة (مثال لعمان)
+    if (strlen($cleanPhone) === 8) { // رقم بدون كود
+        $cleanPhone = '968' . $cleanPhone;
     }
+
+    // 🛠 حفظ أو جلب العميل
+    $client = Client::updateOrCreate(
+        ['phone' => $cleanPhone],
+        ['name'  => $validated['name'] ?? Client::where('phone', $cleanPhone)->value('name')]
+    );
+
+    return response()->json($client);
+}
+
 
     // 📌 جلب عميل حسب الرقم + تنظيف الحجوزات المنتهية
     public function getClient($phone)
@@ -46,18 +58,25 @@ class BotController extends Controller
 }
 
     // 📌 إنشاء حجز جديد
-  public function storeAppointment(Request $request)
+public function storeAppointment(Request $request)
 {
     $validated = $request->validate([
-        'phone'         => 'required|string|max:20',
+        'phone'         => 'required|string|max:30',
         'wash_type_id'  => 'required|exists:wash_types,id',
         'date'          => 'required|date',
         'time'          => 'required',
         'car_number'    => 'required|string'
     ]);
 
-    // جلب أو إنشاء العميل
-    $client = Client::firstOrCreate(['phone' => $validated['phone']]);
+    // 🛠 معالجة الرقم (إزالة @c.us أو أي لاحقة غير ضرورية)
+    $cleanPhone = preg_replace('/@c\.us$/', '', $validated['phone']);
+    $cleanPhone = preg_replace('/[^0-9]/', '', $cleanPhone); // حذف أي رموز غير أرقام
+
+    // جلب أو إنشاء العميل برقم نظيف
+    $client = Client::firstOrCreate(
+        ['phone' => $cleanPhone],
+        ['name'  => $request->input('name', null)]
+    );
 
     // إنشاء الحجز
     $appointment = Appointment::create([
@@ -74,14 +93,14 @@ class BotController extends Controller
     $token = strtoupper(substr(uniqid(), -6)); // رمز أمني قصير
     $link = url("/wash/start/{$appointment->id}?token={$token}");
 
-    // 🔹 حفظ حالة الغسيل في جدول wash_status
-   WashStatus::create([
+    // 🔹 حفظ حالة الغسيل
+    WashStatus::create([
         'appointment_id' => $appointment->id,
         'link'           => $link,
         'status'         => 'pending'
     ]);
 
-    // إضافة الرابط والـ token في الرد (يستخدم في QR Code)
+    // إضافة الرابط في الرد
     $appointment->confirmation_link = $link;
 
     return response()->json($appointment);
@@ -169,4 +188,25 @@ class BotController extends Controller
 
         return response()->json($appointments);
     }
+
+    // 📌 تحديث سعر نوع الغسيل
+  public function updatePrice(Request $request)
+    {
+        $validated = $request->validate([
+            'id'    => 'required|exists:wash_types,id',
+            'price' => 'required|numeric|min:0'
+        ]);
+
+        $washType = WashType::find($validated['id']);
+        $washType->price = $validated['price'];
+        $washType->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => "تم تعديل سعر الخدمة {$washType->name_ar} إلى {$washType->price} ريال"
+        ]);
+    }
+
+
+
 }

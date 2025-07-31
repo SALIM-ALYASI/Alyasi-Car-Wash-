@@ -9,9 +9,15 @@ use Illuminate\Support\Facades\Http;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 
-
 class WashController extends Controller
 {
+    // ...existing code...
+    public function showInvoicePdf($id)
+    {
+        $appointment = Appointment::with(['client', 'washType'])->findOrFail($id);
+        $pdf = Pdf::loadView('invoices.receipt', compact('appointment'));
+        return $pdf->download('invoice_' . $appointment->id . '.pdf');
+    }
     // عرض صفحة إدخال الرمز
     public function start($id, Request $request)
     {

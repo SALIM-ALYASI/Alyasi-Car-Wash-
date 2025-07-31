@@ -16,3 +16,4 @@ Route::post('/wash/start/{id}/verify', [WashController::class, 'verify'])->name(
 
 Route::post('/wash/start/{id}/invoice', [WashController::class, 'sendInvoice'])->name('wash.invoice');
 Route::get('/invoice/{id}', [WashController::class, 'showInvoice'])->name('wash.invoice.show');
+Route::get('/invoice/{id}/pdf', [WashController::class, 'showInvoicePdf'])->name('wash.invoice.pdf');

@@ -88,43 +88,31 @@
                 <table class="table table-bordered table-striped align-middle">
                     <thead class="table-light">
                         <tr>
+                            <th>رقم الفاتورة</th>
                             <th>العميل</th>
-                            <th>تاريخ الحجز</th>
-                            <th>الوقت</th>
+                            <th>تاريخ الفاتورة</th>
+                            <th>المبلغ</th>
                             <th>نوع الغسيل</th>
                             <th>رقم السيارة</th>
-                            <th>الحالة</th>
+                            <th>رابط الفاتورة</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($appointments as $appointment)
+                        @forelse($invoicesToday as $invoice)
                         <tr>
-                            <td>{{ $appointment->client?->name ?? '-' }}</td>
-                            <td>{{ $appointment->date }}</td>
-                            <td>{{ $appointment->time }}</td>
+                            <td>{{ $invoice->id }}</td>
+                            <td>{{ $invoice->client?->name ?? '-' }}</td>
+                            <td>{{ $invoice->created_at->format('Y-m-d') }}</td>
+                            <td>{{ $invoice->amount }} ريال</td>
+                            <td>{{ $invoice->washType?->name_ar ?? '-' }}</td>
+                            <td>{{ $invoice->car_number }}</td>
                             <td>
-                                @if($appointment->washType)
-                                    {{ $appointment->washType->name_ar }} - {{ $appointment->washType->price }} ريال
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td>{{ $appointment->car_number }}</td>
-                            <td>
-                                @if($appointment->status == 'scheduled')
-                                    <span class="badge bg-primary"><i class="bi bi-clock"></i> مجدول</span>
-                                @elseif($appointment->status == 'done')
-                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> منجز</span>
-                                @elseif($appointment->status == 'cancelled')
-                                    <span class="badge bg-danger"><i class="bi bi-x-circle"></i> ملغى</span>
-                                @else
-                                    <span class="badge bg-secondary">غير معروف</span>
-                                @endif
+                                <a href="{{ route('wash.invoice.show', $invoice->id) }}" class="btn btn-sm btn-primary" target="_blank">عرض الفاتورة</a>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center">لا توجد حجوزات</td>
+                            <td colspan="7" class="text-center">لا توجد فواتير اليوم</td>
                         </tr>
                         @endforelse
                     </tbody>

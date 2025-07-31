@@ -20,3 +20,4 @@ Route::get('/api/appointments', [AppointmentApiController::class, 'index']);
 Route::get('/appointments/active', [BotController::class, 'getActiveAppointments']);
 
 // 
+Route::post('/wash-types/update-price', [BotController::class, 'updatePrice']);
