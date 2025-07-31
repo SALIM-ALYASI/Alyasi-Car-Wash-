@@ -98,7 +98,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($invoicesToday as $invoice)
+                        @forelse($appointments as $invoice)
                         <tr>
                             <td>{{ $invoice->id }}</td>
                             <td>{{ $invoice->client?->name ?? '-' }}</td>

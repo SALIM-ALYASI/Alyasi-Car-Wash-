@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Models\Client;
 use App\Models\WashType;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -17,9 +18,12 @@ class DashboardController extends Controller
     $clientsCount = Client::count();
     $cancelledCount = Appointment::where('status', 'cancelled')->count();
 
-    // جلب الحجوزات (آخر 10 حجوزات)
-    $appointments = Appointment::with(['client', 'washType'])->latest()->take(10)->get();
-
+// جلب حجوزات تاريخ اليوم
+$appointments = Appointment::with(['client', 'washType'])
+    ->whereDate('date', Carbon::today()) // فلترة على تاريخ اليوم
+    ->latest()
+    ->take(10)
+    ->get();
     return view('dashboard', [
         'appointmentsToday' => $appointmentsToday,
         'clientsCount' => $clientsCount,
